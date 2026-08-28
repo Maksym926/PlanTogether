@@ -39,3 +39,31 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+tasks.withType(JavaExec).configureEach {
+    systemProperty 'user.timezone', 'UTC'
+}
+tasks.withType(Test).configureEach {
+    systemProperty 'user.timezone', 'UTC'
+}
+testing {
+    suites {
+        integrationTest(JvmTestSuite) {
+            dependencies {
+                implementation project()
+                implementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+                implementation 'org.springframework.boot:spring-boot-starter-jdbc-test'
+                implementation 'org.springframework.boot:spring-boot-starter-flyway-test'
+                implementation 'org.springframework.boot:spring-boot-testcontainers'
+                implementation 'org.testcontainers:junit-jupiter'
+                implementation 'org.testcontainers:postgresql'
+            }
+            targets.all {
+                testTask.configure { shouldRunAfter(tasks.named('test')) }
+            }
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn testing.suites.integrationTest
+}
