@@ -2,6 +2,7 @@ import { defineConfig } from '@playwright/test'
 
 export default defineConfig({
     testDir: './tests',
+    reporter: process.env.CI ? [['dot'], ['html', { open: 'never' }]] : 'list',
     use: { baseURL: 'http://localhost:5173' },
     webServer: [
         {

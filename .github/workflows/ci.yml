@@ -52,10 +52,14 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-          cache-dependency-path: e2e/package-lock.json
+          cache-dependency-path: |
+            e2e/package-lock.json
+            frontend/package-lock.json
       - run: docker compose up -d
       - run: npm ci
         working-directory: e2e
+      - run: npm ci
+        working-directory: frontend
       - run: npx playwright install --with-deps chromium
         working-directory: e2e
       - run: npm test
