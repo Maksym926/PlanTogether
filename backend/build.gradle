@@ -54,8 +54,8 @@ testing {
                 implementation 'org.springframework.boot:spring-boot-starter-jdbc-test'
                 implementation 'org.springframework.boot:spring-boot-starter-flyway-test'
                 implementation 'org.springframework.boot:spring-boot-testcontainers'
-                implementation 'org.testcontainers:junit-jupiter'
-                implementation 'org.testcontainers:postgresql'
+                implementation 'org.testcontainers:testcontainers-junit-jupiter'
+                implementation 'org.testcontainers:testcontainers-postgresql'
             }
             targets.all {
                 testTask.configure { shouldRunAfter(tasks.named('test')) }
