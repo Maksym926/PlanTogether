@@ -22,15 +22,29 @@ public class LoginTokenService {
         loginTokenRepo.put(token.getEmail(), token);
     }
 
-    public boolean verify(String email, String code) {
+    public boolean verify(String email, String code, LocalDateTime usingTime, String sessionId) {
         String hashedCode = SHA1Hash.hashString(code);
         LoginToken token = loginTokenRepo.get(email).orElseThrow(() -> new TokenNotFoundException(email));
-        if(hashedCode.equals(token.getToken_hash())){
-            if(token.getConsumedAt() == null){
-                token.setConsumedAt(LocalDateTime.now());
-                return true;
-            }
+        token.setAttempts(token.getAttempts() + 1);
+        loginTokenRepo.put(email, token);
+        if(token.getConsumedAt() != null){
+            return false;
         }
-        return false;
+        if(token.getAttempts() > 3){
+            return false;
+        }
+        if(!hashedCode.equals(token.getToken_hash())){
+            return false;
+        }
+
+        if(usingTime.isAfter(token.getExpiresAt())){
+            return false;
+        }
+        if(!sessionId.equals(token.getSessionId())){
+            return  false;
+        }
+        token.setConsumedAt(LocalDateTime.now());
+        loginTokenRepo.put(email, token);
+        return true;
     }
 }

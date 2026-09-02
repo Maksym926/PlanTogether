@@ -30,6 +30,7 @@ public class LoginToken {
         this.email = email;
         this.sessionId = sessionId;
         this.requestIp = requestIp;
+        attempts = 0;
         createdAt = LocalDateTime.now();
         expiresAt = createdAt.plusMinutes(15);
 

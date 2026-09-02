@@ -6,6 +6,8 @@ import com.chechotkin.backend.auth.service.LoginTokenService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDateTime;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class CodeGenerationAndValidationTests {
@@ -20,6 +22,8 @@ public class CodeGenerationAndValidationTests {
         sut = new LoginTokenService(generator, loginTokenRepo);
     }
 
+
+
     @Test
     void generateVerificationCode(){
 
@@ -29,7 +33,7 @@ public class CodeGenerationAndValidationTests {
 
     }
     @Test
-    void consumeCodeOneTimeTest(){
+    void consumeTokenOneTimeTest(){
         String code = generator.generate();
         String token_hash = SHA1Hash.hashString(code);
         String email = "max@gmail.com";
@@ -38,11 +42,11 @@ public class CodeGenerationAndValidationTests {
         LoginToken token = new LoginToken(token_hash, email , sessionId, requestIp);
         sut.create(token);
 
-        assertTrue(sut.verify(email, code));
+        assertTrue(sut.verify(email, code, LocalDateTime.now(), sessionId));
 
     }
     @Test
-    void consumedCodeMoreThanOneTimeTest(){
+    void consumedTokenMoreThanOneTimeTest(){
         String code = generator.generate();
         String token_hash = SHA1Hash.hashString(code);
         String email = "max@gmail.com";
@@ -51,14 +55,59 @@ public class CodeGenerationAndValidationTests {
         LoginToken token = new LoginToken(token_hash, email , sessionId, requestIp);
         sut.create(token);
 
-        assertTrue(sut.verify(email, code));
-        assertFalse(sut.verify(email, code));
+        assertTrue(sut.verify(email, code, LocalDateTime.now(), sessionId));
+        assertFalse(sut.verify(email, code, LocalDateTime.now(), sessionId));
 
+    }
+    @Test
+    void shouldRejectOnExpiredTokenTest(){
+        String code = generator.generate();
+        String token_hash = SHA1Hash.hashString(code);
+        String email = "max@gmail.com";
+        String sessionId = "abcd1234";
+        String requestIp = "142.44.32.104";
+        LoginToken token = new LoginToken(token_hash, email , sessionId, requestIp);
+        sut.create(token);
 
-
+        LocalDateTime testTime = LocalDateTime.now().plusMinutes(40);
+        assertFalse(sut.verify(email, code, testTime, sessionId));
 
 
     }
+    @Test
+    void shouldRejectOnNewSessionTest(){
+        String code = generator.generate();
+        String token_hash = SHA1Hash.hashString(code);
+        String email = "max@gmail.com";
+        String sessionId = "abcd1234";
+        String requestIp = "142.44.32.104";
+        LoginToken token = new LoginToken(token_hash, email , sessionId, requestIp);
+        sut.create(token);
+
+        String testSessionID = "test123";
+        assertFalse(sut.verify(email, code, LocalDateTime.now(), testSessionID));
+
+    }
+    @Test
+    void shouldRejectOnMoreThan3Attempts(){
+        String code = generator.generate();
+        String token_hash = SHA1Hash.hashString(code);
+        String email = "max@gmail.com";
+        String sessionId = "abcd1234";
+        String requestIp = "142.44.32.104";
+        LoginToken token = new LoginToken(token_hash, email , sessionId, requestIp);
+        sut.create(token);
+
+        String incorrectCode = "123";
+
+        assertFalse(sut.verify(email, incorrectCode, LocalDateTime.now(), sessionId));
+        assertFalse(sut.verify(email, incorrectCode, LocalDateTime.now(), sessionId));
+        assertFalse(sut.verify(email, incorrectCode, LocalDateTime.now(), sessionId));
+        assertFalse(sut.verify(email, code, LocalDateTime.now(), sessionId));
+
+    }
+
+
 
 
 }
