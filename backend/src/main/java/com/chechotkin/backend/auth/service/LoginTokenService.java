@@ -8,10 +8,12 @@ import com.chechotkin.backend.auth.repo.LoginTokenRepo;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
 
 public class LoginTokenService {
 
     private static final Duration TIME_TO_LIVE = Duration.ofMinutes(15);
+    private static final int MAX_ATTEMPTS = 3;
 
     private final CodeGenerator generator;
     private final LoginTokenRepo loginTokenRepo;
@@ -23,45 +25,58 @@ public class LoginTokenService {
         this.clock = clock;
     }
 
+
     public String create(String email, String sessionId, String requestIp) {
+        loginTokenRepo.deleteActiveFor(email);
+
         String code = generator.generate();
         Instant now = clock.instant();
-        LoginToken token = new LoginToken(CodeHasher.hash(code, email), email, sessionId, requestIp,
-                now, now.plus(TIME_TO_LIVE));
-        loginTokenRepo.put(email, token);
+
+        loginTokenRepo.insert(new LoginToken(
+                CodeHasher.hash(code, email),
+                email,
+                sessionId,
+                requestIp,
+                now,
+                now.plus(TIME_TO_LIVE)));
+
         return code;
     }
 
     public VerifyResult verify(String email, String code, String sessionId) {
-        String hashedCode = CodeHasher.hash(code, email);
-        LoginToken token;
-        if(loginTokenRepo.get(email).isPresent()){
-            token = loginTokenRepo.get(email).get();
-        }
-        else {
+        Optional<LoginToken> active = loginTokenRepo.findActiveByEmail(email);
+        if (active.isEmpty()) {
+
             return VerifyResult.WRONG_CODE;
         }
 
+        LoginToken token = active.get();
         Instant now = clock.instant();
-        token.setAttempts(token.getAttempts() + 1);
-        loginTokenRepo.put(email, token);
-        if(token.getConsumedAt() != null){
-            return VerifyResult.CONSUMED;
-        }
-        if(token.getAttempts() >= 3){
+
+
+        if (token.getAttempts() >= MAX_ATTEMPTS) {
             return VerifyResult.TOO_MANY_ATTEMPTS;
         }
-        if(now.isAfter(token.getExpiresAt())){
+        if (now.isAfter(token.getExpiresAt())) {
             return VerifyResult.EXPIRED;
         }
-        if(!sessionId.equals(token.getSessionId())){
+        if (!sessionId.equals(token.getSessionId())) {
             return VerifyResult.WRONG_SESSION;
         }
-        if(!hashedCode.equals(token.getToken_hash())){
+
+        if (!CodeHasher.hash(code, email).equals(token.getToken_hash())) {
+            loginTokenRepo.incrementAttempts(token.getId());
             return VerifyResult.WRONG_CODE;
         }
-        token.setConsumedAt(now);
-        loginTokenRepo.put(email, token);
-        return VerifyResult.OK;
+
+
+        return loginTokenRepo.consume(token.getId(), now)
+                ? VerifyResult.OK
+                : VerifyResult.CONSUMED;
+    }
+
+
+    public int deleteExpiredOlderThan(Duration retention) {
+        return loginTokenRepo.deleteOlderThan(clock.instant().minus(retention));
     }
 }

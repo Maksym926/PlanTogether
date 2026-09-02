@@ -1,10 +1,5 @@
 package com.chechotkin.backend.auth;
 
-import com.chechotkin.backend.auth.exceptions.FailedToCreateCodeException;
-
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
 public class CodeGenerator {

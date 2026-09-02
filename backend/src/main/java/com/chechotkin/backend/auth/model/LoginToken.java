@@ -9,6 +9,9 @@ import java.time.Instant;
 @Setter
 public class LoginToken {
 
+    /** null until insert() assigns one. */
+    private Long id;
+
     private String token_hash;
 
     private String email;
