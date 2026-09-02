@@ -3,7 +3,7 @@ package com.chechotkin.backend.auth.model;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Getter
 @Setter
@@ -17,23 +17,22 @@ public class LoginToken {
 
     private Integer attempts;
 
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
-    private LocalDateTime expiresAt;
+    private Instant expiresAt;
 
-    private LocalDateTime consumedAt;
+    private Instant consumedAt;
 
     private String requestIp;
 
-    public LoginToken(String token_hash, String email, String sessionId, String requestIp) {
+    public LoginToken(String token_hash, String email, String sessionId, String requestIp,
+                      Instant createdAt, Instant expiresAt) {
         this.token_hash = token_hash;
         this.email = email;
         this.sessionId = sessionId;
         this.requestIp = requestIp;
+        this.createdAt = createdAt;
+        this.expiresAt = expiresAt;
         attempts = 0;
-        createdAt = LocalDateTime.now();
-        expiresAt = createdAt.plusMinutes(15);
-
-
     }
 }

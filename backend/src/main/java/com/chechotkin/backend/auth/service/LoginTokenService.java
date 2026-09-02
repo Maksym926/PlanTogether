@@ -1,50 +1,67 @@
 package com.chechotkin.backend.auth.service;
 
 import com.chechotkin.backend.auth.CodeGenerator;
-import com.chechotkin.backend.auth.SHA1Hash;
-import com.chechotkin.backend.auth.exceptions.TokenNotFoundException;
+import com.chechotkin.backend.auth.CodeHasher;
 import com.chechotkin.backend.auth.model.LoginToken;
 import com.chechotkin.backend.auth.repo.LoginTokenRepo;
 
-import java.time.LocalDateTime;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 
 public class LoginTokenService {
 
+    private static final Duration TIME_TO_LIVE = Duration.ofMinutes(15);
+
     private final CodeGenerator generator;
     private final LoginTokenRepo loginTokenRepo;
+    private final Clock clock;
 
-    public LoginTokenService(CodeGenerator generator, LoginTokenRepo loginTokenRepo) {
+    public LoginTokenService(CodeGenerator generator, LoginTokenRepo loginTokenRepo, Clock clock) {
         this.generator = generator;
         this.loginTokenRepo = loginTokenRepo;
+        this.clock = clock;
     }
 
-    public void create(LoginToken token) {
-        loginTokenRepo.put(token.getEmail(), token);
+    public String create(String email, String sessionId, String requestIp) {
+        String code = generator.generate();
+        Instant now = clock.instant();
+        LoginToken token = new LoginToken(CodeHasher.hash(code, email), email, sessionId, requestIp,
+                now, now.plus(TIME_TO_LIVE));
+        loginTokenRepo.put(email, token);
+        return code;
     }
 
-    public boolean verify(String email, String code, LocalDateTime usingTime, String sessionId) {
-        String hashedCode = SHA1Hash.hashString(code);
-        LoginToken token = loginTokenRepo.get(email).orElseThrow(() -> new TokenNotFoundException(email));
+    public VerifyResult verify(String email, String code, String sessionId) {
+        String hashedCode = CodeHasher.hash(code, email);
+        LoginToken token;
+        if(loginTokenRepo.get(email).isPresent()){
+            token = loginTokenRepo.get(email).get();
+        }
+        else {
+            return VerifyResult.WRONG_CODE;
+        }
+
+        Instant now = clock.instant();
         token.setAttempts(token.getAttempts() + 1);
         loginTokenRepo.put(email, token);
         if(token.getConsumedAt() != null){
-            return false;
+            return VerifyResult.CONSUMED;
         }
-        if(token.getAttempts() > 3){
-            return false;
+        if(token.getAttempts() >= 3){
+            return VerifyResult.TOO_MANY_ATTEMPTS;
         }
-        if(!hashedCode.equals(token.getToken_hash())){
-            return false;
-        }
-
-        if(usingTime.isAfter(token.getExpiresAt())){
-            return false;
+        if(now.isAfter(token.getExpiresAt())){
+            return VerifyResult.EXPIRED;
         }
         if(!sessionId.equals(token.getSessionId())){
-            return  false;
+            return VerifyResult.WRONG_SESSION;
         }
-        token.setConsumedAt(LocalDateTime.now());
+        if(!hashedCode.equals(token.getToken_hash())){
+            return VerifyResult.WRONG_CODE;
+        }
+        token.setConsumedAt(now);
         loginTokenRepo.put(email, token);
-        return true;
+        return VerifyResult.OK;
     }
 }
