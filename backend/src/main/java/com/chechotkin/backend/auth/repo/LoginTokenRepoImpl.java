@@ -5,6 +5,8 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Optional;
 
 @Repository
@@ -25,8 +27,8 @@ public class LoginTokenRepoImpl implements LoginTokenRepo{
                 .param("token_hash", token.tokenHash())
                 .param("email", token.email())
                 .param("session_id", token.sessionId())
-                .param("created_at", token.createdAt())
-                .param("expires_at", token.expiresAt())
+                .param("created_at", OffsetDateTime.ofInstant(token.createdAt(), ZoneOffset.UTC))
+                .param("expires_at", OffsetDateTime.ofInstant(token.expiresAt(), ZoneOffset.UTC))
                 .param("request_ip", token.requestIp())
                 .update();
     }
@@ -70,7 +72,7 @@ public class LoginTokenRepoImpl implements LoginTokenRepo{
                 UPDATE login_token SET consumed_at=:consumed_at
                 WHERE id=:id AND consumed_at IS NULL
             """)
-                .param("consumed_at", at)
+                .param("consumed_at", OffsetDateTime.ofInstant(at, ZoneOffset.UTC))
                 .param("id", id)
                 .update() == 1;
 
@@ -79,7 +81,7 @@ public class LoginTokenRepoImpl implements LoginTokenRepo{
     @Override
     public int deleteOlderThan(Instant cutoff) {
         return jdbc.sql("DELETE From login_token WHERE created_at<:cutoff")
-                .param("cutoff", cutoff)
+                .param("cutoff", OffsetDateTime.ofInstant(cutoff, ZoneOffset.UTC))
                 .update();
     }
 }
