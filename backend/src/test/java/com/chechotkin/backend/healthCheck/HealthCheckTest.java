@@ -1,6 +1,5 @@
-package com.chechotkin.backend;
+package com.chechotkin.backend.healthCheck;
 
-import com.chechotkin.backend.healthCheck.HealthCheckController;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;

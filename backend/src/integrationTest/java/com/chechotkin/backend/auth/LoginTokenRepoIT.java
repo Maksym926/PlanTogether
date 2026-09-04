@@ -16,14 +16,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 
-class LoginTokenRepoImplIT extends AbstractIT {
+class LoginTokenRepoIT extends AbstractIT {
 
     private static final String EMAIL = "max@gmail.com";
     private static final String SESSION_ID = "session-abc";
     private static final String REQUEST_IP = "142.44.32.104";
 
-    // Postgres timestamptz keeps microseconds; Instant keeps nanoseconds. Truncate
-    // the fixture, or a value that prints identically will fail an equality assert.
+
     private static final Instant NOW = Instant.parse("2026-01-01T12:00:00Z").truncatedTo(ChronoUnit.MICROS);
 
     @Autowired

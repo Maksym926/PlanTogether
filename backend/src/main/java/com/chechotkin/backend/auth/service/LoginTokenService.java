@@ -4,13 +4,14 @@ import com.chechotkin.backend.auth.CodeGenerator;
 import com.chechotkin.backend.auth.CodeHasher;
 import com.chechotkin.backend.auth.model.LoginToken;
 import com.chechotkin.backend.auth.repo.LoginTokenRepo;
+import com.chechotkin.backend.auth.usecase.LoginTokenUseCase;
 
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 
-public class LoginTokenService {
+public class LoginTokenService implements LoginTokenUseCase {
 
     private static final Duration TIME_TO_LIVE = Duration.ofMinutes(15);
     private static final int MAX_ATTEMPTS = 3;
@@ -26,6 +27,7 @@ public class LoginTokenService {
     }
 
 
+    @Override
     public String create(String email, String sessionId, String requestIp) {
         loginTokenRepo.deleteActiveFor(email);
 
@@ -43,6 +45,7 @@ public class LoginTokenService {
         return code;
     }
 
+    @Override
     public VerifyResult verify(String email, String code, String sessionId) {
         Optional<LoginToken> active = loginTokenRepo.findActiveByEmail(email);
         if (active.isEmpty()) {
@@ -76,6 +79,7 @@ public class LoginTokenService {
     }
 
 
+    @Override
     public int deleteExpiredOlderThan(Duration retention) {
         return loginTokenRepo.deleteOlderThan(clock.instant().minus(retention));
     }
