@@ -9,7 +9,7 @@ import java.util.Optional;
 public interface LoginTokenRepo {
 
 
-    LoginToken insert(LoginToken token);
+    void insert(LoginToken token);
 
 
     Optional<LoginToken> findActiveByEmail(String email);

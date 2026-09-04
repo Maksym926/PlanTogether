@@ -56,7 +56,7 @@ public class CodeGenerationAndValidationTests {
         String code = issueCodeFor(EMAIL, SESSION_ID);
 
         assertEquals(VerifyResult.OK, sut.verify(EMAIL, code, SESSION_ID));
-        assertEquals(VerifyResult.CONSUMED, sut.verify(EMAIL, code, SESSION_ID));
+        assertEquals(VerifyResult.WRONG_CODE, sut.verify(EMAIL, code, SESSION_ID));
 
     }
     @Test
@@ -111,6 +111,7 @@ public class CodeGenerationAndValidationTests {
 
         String incorrectCode = "123";
 
+        assertEquals(VerifyResult.WRONG_CODE, sut.verify(EMAIL, incorrectCode, SESSION_ID));
         assertEquals(VerifyResult.WRONG_CODE, sut.verify(EMAIL, incorrectCode, SESSION_ID));
         assertEquals(VerifyResult.WRONG_CODE, sut.verify(EMAIL, incorrectCode, SESSION_ID));
         assertEquals(VerifyResult.TOO_MANY_ATTEMPTS, sut.verify(EMAIL, code, SESSION_ID));

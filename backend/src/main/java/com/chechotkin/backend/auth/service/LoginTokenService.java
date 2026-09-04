@@ -32,7 +32,7 @@ public class LoginTokenService {
         String code = generator.generate();
         Instant now = clock.instant();
 
-        loginTokenRepo.insert(new LoginToken(
+        loginTokenRepo.insert(LoginToken.issue(
                 CodeHasher.hash(code, email),
                 email,
                 sessionId,
@@ -54,23 +54,23 @@ public class LoginTokenService {
         Instant now = clock.instant();
 
 
-        if (token.getAttempts() >= MAX_ATTEMPTS) {
+        if (token.attempts() >= MAX_ATTEMPTS) {
             return VerifyResult.TOO_MANY_ATTEMPTS;
         }
-        if (now.isAfter(token.getExpiresAt())) {
+        if (now.isAfter(token.expiresAt())) {
             return VerifyResult.EXPIRED;
         }
-        if (!sessionId.equals(token.getSessionId())) {
+        if (!sessionId.equals(token.sessionId())) {
             return VerifyResult.WRONG_SESSION;
         }
 
-        if (!CodeHasher.hash(code, email).equals(token.getToken_hash())) {
-            loginTokenRepo.incrementAttempts(token.getId());
+        if (!CodeHasher.hash(code, email).equals(token.tokenHash())) {
+            loginTokenRepo.incrementAttempts(token.id());
             return VerifyResult.WRONG_CODE;
         }
 
 
-        return loginTokenRepo.consume(token.getId(), now)
+        return loginTokenRepo.consume(token.id(), now)
                 ? VerifyResult.OK
                 : VerifyResult.CONSUMED;
     }

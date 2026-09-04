@@ -1,41 +1,34 @@
 package com.chechotkin.backend.auth.model;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import java.time.Instant;
 
-@Getter
-@Setter
-public class LoginToken {
 
-    /** null until insert() assigns one. */
-    private Long id;
+public record   LoginToken(
+        Long id,
+        String tokenHash,
+        String email,
+        String sessionId,
+        int attempts,
+        Instant createdAt,
+        Instant expiresAt,
+        Instant consumedAt,
+        String requestIp) {
 
-    private String token_hash;
 
-    private String email;
+    public static LoginToken issue(String tokenHash, String email, String sessionId, String requestIp,
+                                   Instant createdAt, Instant expiresAt) {
+        return new LoginToken(null, tokenHash, email, sessionId, 0, createdAt, expiresAt, null, requestIp);
+    }
 
-    private String sessionId;
+    public LoginToken withId(long newId) {
+        return new LoginToken(newId, tokenHash, email, sessionId, attempts, createdAt, expiresAt, consumedAt, requestIp);
+    }
 
-    private Integer attempts;
+    public LoginToken withAttempts(int newAttempts) {
+        return new LoginToken(id, tokenHash, email, sessionId, newAttempts, createdAt, expiresAt, consumedAt, requestIp);
+    }
 
-    private Instant createdAt;
-
-    private Instant expiresAt;
-
-    private Instant consumedAt;
-
-    private String requestIp;
-
-    public LoginToken(String token_hash, String email, String sessionId, String requestIp,
-                      Instant createdAt, Instant expiresAt) {
-        this.token_hash = token_hash;
-        this.email = email;
-        this.sessionId = sessionId;
-        this.requestIp = requestIp;
-        this.createdAt = createdAt;
-        this.expiresAt = expiresAt;
-        attempts = 0;
+    public LoginToken withConsumedAt(Instant at) {
+        return new LoginToken(id, tokenHash, email, sessionId, attempts, createdAt, expiresAt, at, requestIp);
     }
 }

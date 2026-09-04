@@ -15,23 +15,23 @@ public class LoginTokenRepoFake implements LoginTokenRepo {
     private long nextId = 1;
 
     @Override
-    public LoginToken insert(LoginToken token) {
-        token.setId(nextId++);
-        rows.put(token.getId(), token);
-        return token;
+    public void insert(LoginToken token) {
+        long id = nextId++;
+        rows.put(id, token.withId(id));
     }
 
     @Override
     public Optional<LoginToken> findActiveByEmail(String email) {
+
         return rows.values().stream()
-                .filter(t -> email.equals(t.getEmail()) && t.getConsumedAt() == null)
+                .filter(t -> email.equals(t.email()) && t.consumedAt() == null)
                 .reduce((first, second) -> second);
     }
 
     @Override
     public int deleteActiveFor(String email) {
         int before = rows.size();
-        rows.values().removeIf(t -> email.equals(t.getEmail()) && t.getConsumedAt() == null);
+        rows.values().removeIf(t -> email.equals(t.email()) && t.consumedAt() == null);
         return before - rows.size();
     }
 
@@ -41,24 +41,25 @@ public class LoginTokenRepoFake implements LoginTokenRepo {
         if (token == null) {
             return 0;
         }
-        token.setAttempts(token.getAttempts() + 1);
-        return token.getAttempts();
+        LoginToken updated = token.withAttempts(token.attempts() + 1);
+        rows.put(id, updated);
+        return updated.attempts();
     }
 
     @Override
     public boolean consume(long id, Instant at) {
         LoginToken token = rows.get(id);
-        if (token == null || token.getConsumedAt() != null) {
+        if (token == null || token.consumedAt() != null) {
             return false;
         }
-        token.setConsumedAt(at);
+        rows.put(id, token.withConsumedAt(at));
         return true;
     }
 
     @Override
     public int deleteOlderThan(Instant cutoff) {
         int before = rows.size();
-        rows.values().removeIf(t -> t.getCreatedAt().isBefore(cutoff));
+        rows.values().removeIf(t -> t.createdAt().isBefore(cutoff));
         return before - rows.size();
     }
 }
