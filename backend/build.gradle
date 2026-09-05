@@ -47,7 +47,7 @@ tasks.withType(Test).configureEach {
 }
 testing {
     suites {
-        integrationTest(JvmTestSuite) {
+        integrationTests(JvmTestSuite) {
             dependencies {
                 implementation project()
                 implementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
@@ -65,5 +65,5 @@ testing {
 }
 
 tasks.named('check') {
-    dependsOn testing.suites.integrationTest
+    dependsOn testing.suites.integrationTests
 }

@@ -41,7 +41,7 @@ public class UserRepoImpl implements UserRepo{
         return jdbc.sql("""
                     SELECT id, email, displayed_name, created_at
                     FROM users
-                    WHERE email = :email
+                    WHERE lower(email) = lower(:email)
                     """)
                 .param("email", email)
                 .query(User.class)

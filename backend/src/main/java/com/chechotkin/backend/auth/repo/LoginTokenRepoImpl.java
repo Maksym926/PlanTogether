@@ -39,7 +39,7 @@ public class LoginTokenRepoImpl implements LoginTokenRepo{
                         SELECT id, token_hash, email, session_id, attempts,
                                created_at, expires_at, consumed_at, request_ip
                         FROM login_token
-                        WHERE email = :email
+                        WHERE email = :email AND consumed_at IS NULL
                         ORDER BY created_at DESC, id DESC
                         LIMIT 1
                         """)

@@ -10,7 +10,9 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -33,20 +35,17 @@ class LoginTokenRepoIT extends AbstractIT {
 
     @BeforeEach
     void clearTable() {
-        // Not @Transactional: rolling back would hide rows from other threads,
-        // which breaks the concurrency test for consume() later in this class.
         jdbc.sql("TRUNCATE login_token RESTART IDENTITY").update();
+    }
+    private LoginToken issueFor(String email, String session_id, Instant time){
+        return LoginToken.issue(CodeHasher.hash("123456", email), email, session_id, REQUEST_IP, time, NOW.plus(15, ChronoUnit.MINUTES));
     }
 
     @Test
     void insertedTokenIsReadBackUnchangedTest() {
-        LoginToken inserted = LoginToken.issue(
-                CodeHasher.hash("123456", EMAIL),
-                EMAIL,
-                SESSION_ID,
-                REQUEST_IP,
-                NOW,
-                NOW.plus(15, ChronoUnit.MINUTES));
+        LoginToken inserted = issueFor(EMAIL, SESSION_ID, NOW);
+
+
 
         repo.insert(inserted);
 
@@ -55,13 +54,10 @@ class LoginTokenRepoIT extends AbstractIT {
         assertThat(found).isPresent();
         LoginToken token = found.get();
 
-        // The id is assigned by the database, so it exists here but not on the
-        // object we passed in.
+
         assertThat(token.id()).isNotNull();
 
-        // Every column, because this is what proves SimplePropertyRowMapper really
-        // maps token_hash -> tokenHash, created_at -> createdAt, and so on. Any
-        // one of these silently arriving null is the failure mode worth catching.
+
         assertThat(token.tokenHash()).isEqualTo(inserted.tokenHash());
         assertThat(token.email()).isEqualTo(EMAIL);
         assertThat(token.sessionId()).isEqualTo(SESSION_ID);
@@ -69,32 +65,21 @@ class LoginTokenRepoIT extends AbstractIT {
         assertThat(token.createdAt()).isEqualTo(NOW);
         assertThat(token.expiresAt()).isEqualTo(NOW.plus(15, ChronoUnit.MINUTES));
 
-        // Both come from column defaults — insert() never sends them.
+
         assertThat(token.attempts()).isZero();
         assertThat(token.consumedAt()).isNull();
     }
     @Test
     void getOneValidTokenTest(){
-        LoginToken inserted1 = LoginToken.issue(
-                CodeHasher.hash("123456", EMAIL),
-                EMAIL,
-                SESSION_ID,
-                REQUEST_IP,
-                NOW,
-                NOW.plus(15, ChronoUnit.MINUTES));
+        LoginToken inserted1 = issueFor(EMAIL, SESSION_ID, NOW);
 
         repo.insert(inserted1);
 
         Instant testTime = NOW.plus(15, ChronoUnit.MINUTES);
         String testSession = "test-session";
 
-        LoginToken inserted2 = LoginToken.issue(
-                CodeHasher.hash("123456", EMAIL),
-                EMAIL,
-                testSession,
-                REQUEST_IP,
-                testTime,
-                NOW.plus(15, ChronoUnit.MINUTES));
+        LoginToken inserted2 = issueFor(EMAIL, testSession, testTime);
+
 
         repo.insert(inserted2);
 
@@ -110,81 +95,66 @@ class LoginTokenRepoIT extends AbstractIT {
 
     @Test
     void removesUnconsumedTokenTest(){
-        LoginToken inserted1 = LoginToken.issue(
-                CodeHasher.hash("123456", EMAIL),
-                EMAIL,
-                SESSION_ID,
-                REQUEST_IP,
-                NOW,
-                NOW.plus(15, ChronoUnit.MINUTES));
+        repo.insert(issueFor(EMAIL, SESSION_ID, NOW));
+        repo.insert(issueFor("other@gmail.com", SESSION_ID, NOW));
 
-        repo.insert(inserted1);
+        repo.insert(issueFor(EMAIL, SESSION_ID, NOW));
+        long consumedId = repo.findActiveByEmail(EMAIL).orElseThrow().id();
+        repo.consume(consumedId, NOW);
 
-        repo.deleteActiveFor(EMAIL);
+        int deleted = repo.deleteActiveFor(EMAIL);
 
-        Optional<LoginToken> found = repo.findActiveByEmail(EMAIL);
+        assertThat(deleted).isEqualTo(1);
+        assertThat(repo.findActiveByEmail(EMAIL)).isEmpty();
+        assertThat(repo.findActiveByEmail("other@gmail.com")).isPresent();
 
-        assertThat(found).isNotPresent();
+        Long surviving = jdbc.sql("SELECT count(*) FROM login_token WHERE email = :e")
+                .param("e", EMAIL).query(Long.class).single();
+        assertThat(surviving).isEqualTo(1);
 
     }
 
     @Test
     void shouldIncrementAttemptsTest(){
-        LoginToken inserted1 = LoginToken.issue(
-                CodeHasher.hash("123456", EMAIL),
-                EMAIL,
-                SESSION_ID,
-                REQUEST_IP,
-                NOW,
-                NOW.plus(15, ChronoUnit.MINUTES));
+        LoginToken inserted = issueFor(EMAIL, SESSION_ID, NOW);
 
-        repo.insert(inserted1);
+        repo.insert(inserted);
 
-        LoginToken foundWith0Attempts = repo.findActiveByEmail(EMAIL).get();
+        LoginToken token = repo.findActiveByEmail(EMAIL).get();
 
-        repo.incrementAttempts(foundWith0Attempts.id());
+        assertThat(repo.incrementAttempts(token.id())).isEqualTo(1);
+        assertThat(repo.incrementAttempts(token.id())).isEqualTo(2);
 
-        LoginToken foundWith1Attempt = repo.findActiveByEmail(EMAIL).get();
 
-        assertEquals(1, foundWith1Attempt.attempts());
 
     }
 
     @Test
     void shouldRejectOnConsumedToken(){
 
-        LoginToken inserted1 = LoginToken.issue(
-                CodeHasher.hash("123456", EMAIL),
-                EMAIL,
-                SESSION_ID,
-                REQUEST_IP,
-                NOW,
-                NOW.plus(15, ChronoUnit.MINUTES));
+        LoginToken inserted = issueFor(EMAIL, SESSION_ID, NOW);
 
-        repo.insert(inserted1);
+        repo.insert(inserted);
 
         LoginToken token = repo.findActiveByEmail(EMAIL).get();
 
         assertTrue(repo.consume(token.id(), NOW));
 
-        LoginToken consumedToken = repo.findActiveByEmail(EMAIL).get();
+        Instant consumedAt = jdbc.sql("SELECT consumed_at FROM login_token WHERE id = :id")
+                .param("id", token.id())
+                .query(Instant.class)
+                .single();
 
-        assertNotNull(consumedToken.consumedAt());
+        assertThat(consumedAt).isEqualTo(NOW);
         assertFalse(repo.consume(token.id(), NOW));
 
     }
 
     @Test
     void shouldRemoveOldTokensTest(){
-        LoginToken inserted1 = LoginToken.issue(
-                CodeHasher.hash("123456", EMAIL),
-                EMAIL,
-                SESSION_ID,
-                REQUEST_IP,
-                NOW,
-                NOW.plus(15, ChronoUnit.MINUTES));
+        LoginToken inserted = issueFor(EMAIL, SESSION_ID, NOW);
 
-        repo.insert(inserted1);
+        repo.insert(inserted);
 
         Instant testTime1 = NOW.minus(15, ChronoUnit.DAYS);
 
@@ -202,8 +172,31 @@ class LoginTokenRepoIT extends AbstractIT {
 
         assertThat(token2).isNotPresent();
 
+    }
+    @Test
+    void onlyOneOfTwoConcurrentConsumeWins() throws Exception{
+        repo.insert(issueFor(EMAIL, SESSION_ID, NOW));
+        long id = repo.findActiveByEmail(EMAIL).orElseThrow().id();
+
+        var latch = new CountDownLatch(1); // helps to start threads together
+        var pool = Executors.newFixedThreadPool(2); //  calling two consumes on different threads
+
+        Callable<Boolean> attempt = () -> { // both threads block on the latch, then race
+            latch.await();
+            return repo.consume(id, NOW);
+        };
+
+        // Submit both before releasing the latch
+        Future<Boolean> first  = pool.submit(attempt);
+        Future<Boolean> second = pool.submit(attempt);
 
 
+        latch.countDown(); //Release latch
+
+        boolean a = first.get();
+        boolean b = second.get();
+
+        assertThat(List.of(a, b)).containsExactlyInAnyOrder(true, false);
 
     }
 
