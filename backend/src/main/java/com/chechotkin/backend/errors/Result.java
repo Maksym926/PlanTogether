@@ -4,12 +4,12 @@ import java.util.function.Function;
 
 public class Result<T> {
     private final T result;
-    private final BaseError error;
+    private final BaseErrors error;
     public Result(T result) {
         this.result = result;
         this.error =null;
     }
-    public Result(BaseError error){
+    public Result(BaseErrors error){
         this.error = error;
         this.result = null;
     }
@@ -22,7 +22,7 @@ public class Result<T> {
         return  result;
     }
 
-    public BaseError getError(){
+    public BaseErrors getError(){
         return error;
     }
 
@@ -30,11 +30,11 @@ public class Result<T> {
         return new Result<>(result);
     }
 
-    public static <T> Result<T> error(BaseError error){
+    public static <T> Result<T> error(BaseErrors error){
         return new Result<>(error);
     }
 
-    public<R> R mapError(Function<BaseError, R> mapper){
+    public<R> R mapError(Function<BaseErrors, R> mapper){
         return mapper.apply(error);
     }
     public<R> R mapResult(Function<T, R> mapper){

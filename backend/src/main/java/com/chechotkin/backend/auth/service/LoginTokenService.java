@@ -1,7 +1,7 @@
 package com.chechotkin.backend.auth.service;
 
-import com.chechotkin.backend.auth.CodeGenerator;
-import com.chechotkin.backend.auth.CodeHasher;
+import com.chechotkin.backend.auth.helpers.CodeGeneratorImpl;
+import com.chechotkin.backend.auth.helpers.CodeHasher;
 import com.chechotkin.backend.auth.model.LoginToken;
 import com.chechotkin.backend.auth.repo.LoginTokenRepo;
 import com.chechotkin.backend.auth.usecase.LoginTokenUseCase;
@@ -16,11 +16,11 @@ public class LoginTokenService implements LoginTokenUseCase {
     private static final Duration TIME_TO_LIVE = Duration.ofMinutes(15);
     private static final int MAX_ATTEMPTS = 3;
 
-    private final CodeGenerator generator;
+    private final CodeGeneratorImpl generator;
     private final LoginTokenRepo loginTokenRepo;
     private final Clock clock;
 
-    public LoginTokenService(CodeGenerator generator, LoginTokenRepo loginTokenRepo, Clock clock) {
+    public LoginTokenService(CodeGeneratorImpl generator, LoginTokenRepo loginTokenRepo, Clock clock) {
         this.generator = generator;
         this.loginTokenRepo = loginTokenRepo;
         this.clock = clock;

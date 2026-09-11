@@ -1,6 +1,7 @@
 package com.chechotkin.backend.auth;
 
 import com.chechotkin.backend.AbstractIT;
+import com.chechotkin.backend.auth.helpers.CodeHasher;
 import com.chechotkin.backend.auth.model.LoginToken;
 import com.chechotkin.backend.auth.repo.LoginTokenRepo;
 import org.junit.jupiter.api.BeforeEach;

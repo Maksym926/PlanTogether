@@ -1,5 +1,6 @@
 package com.chechotkin.backend.auth;
 
+import com.chechotkin.backend.auth.helpers.CodeGeneratorImpl;
 import com.chechotkin.backend.auth.repo.LoginTokenRepo;
 import com.chechotkin.backend.auth.service.LoginTokenService;
 import com.chechotkin.backend.auth.service.VerifyResult;
@@ -19,14 +20,14 @@ public class CodeGenerationAndValidationTests {
     private static final String REQUEST_IP = "142.44.32.104";
     private static final Instant START = Instant.parse("2026-01-01T12:00:00Z");
 
-    CodeGenerator generator;
+    CodeGeneratorImpl generator;
     LoginTokenRepo loginTokenRepo;
     MutableClock clock;
     LoginTokenService sut;
 
     @BeforeEach
     void setUp() {
-        generator = new CodeGenerator();
+        generator = new CodeGeneratorImpl();
         loginTokenRepo = new LoginTokenRepoFake();
         clock = new MutableClock(START, ZoneOffset.UTC);
         sut = new LoginTokenService(generator, loginTokenRepo, clock);

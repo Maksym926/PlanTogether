@@ -1,4 +1,4 @@
-package com.chechotkin.backend.auth;
+package com.chechotkin.backend.auth.helpers;
 
 import com.chechotkin.backend.auth.exceptions.FailedToCreateCodeException;
 
