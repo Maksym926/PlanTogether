@@ -2,7 +2,7 @@ package com.chechotkin.backend.auth;
 
 import com.chechotkin.backend.auth.helpers.CodeGeneratorImpl;
 import com.chechotkin.backend.auth.repo.LoginTokenRepo;
-import com.chechotkin.backend.auth.service.LoginTokenService;
+import com.chechotkin.backend.auth.service.LoginTokenServiceServiceImpl;
 import com.chechotkin.backend.auth.service.VerifyResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,14 +23,14 @@ public class CodeGenerationAndValidationTests {
     CodeGeneratorImpl generator;
     LoginTokenRepo loginTokenRepo;
     MutableClock clock;
-    LoginTokenService sut;
+    LoginTokenServiceServiceImpl sut;
 
     @BeforeEach
     void setUp() {
         generator = new CodeGeneratorImpl();
         loginTokenRepo = new LoginTokenRepoFake();
         clock = new MutableClock(START, ZoneOffset.UTC);
-        sut = new LoginTokenService(generator, loginTokenRepo, clock);
+        sut = new LoginTokenServiceServiceImpl(generator, loginTokenRepo, clock);
     }
 
     private String issueCodeFor(String email, String sessionId) {

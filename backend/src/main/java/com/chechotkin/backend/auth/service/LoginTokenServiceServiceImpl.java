@@ -1,26 +1,25 @@
 package com.chechotkin.backend.auth.service;
 
-import com.chechotkin.backend.auth.helpers.CodeGeneratorImpl;
+import com.chechotkin.backend.auth.helpers.CodeGenerator;
 import com.chechotkin.backend.auth.helpers.CodeHasher;
-import com.chechotkin.backend.auth.model.LoginToken;
 import com.chechotkin.backend.auth.repo.LoginTokenRepo;
-import com.chechotkin.backend.auth.usecase.LoginTokenUseCase;
+import com.chechotkin.backend.auth.usecase.LoginTokenService;
 
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 
-public class LoginTokenService implements LoginTokenUseCase {
+public class LoginTokenServiceServiceImpl implements LoginTokenService {
 
     private static final Duration TIME_TO_LIVE = Duration.ofMinutes(15);
     private static final int MAX_ATTEMPTS = 3;
 
-    private final CodeGeneratorImpl generator;
+    private final CodeGenerator generator;
     private final LoginTokenRepo loginTokenRepo;
     private final Clock clock;
 
-    public LoginTokenService(CodeGeneratorImpl generator, LoginTokenRepo loginTokenRepo, Clock clock) {
+    public LoginTokenServiceServiceImpl(CodeGenerator generator, LoginTokenRepo loginTokenRepo, Clock clock) {
         this.generator = generator;
         this.loginTokenRepo = loginTokenRepo;
         this.clock = clock;
@@ -34,7 +33,7 @@ public class LoginTokenService implements LoginTokenUseCase {
         String code = generator.generate();
         Instant now = clock.instant();
 
-        loginTokenRepo.insert(LoginToken.issue(
+        loginTokenRepo.insert(com.chechotkin.backend.auth.model.LoginToken.issue(
                 CodeHasher.hash(code, email),
                 email,
                 sessionId,
@@ -47,13 +46,13 @@ public class LoginTokenService implements LoginTokenUseCase {
 
     @Override
     public VerifyResult verify(String email, String code, String sessionId) {
-        Optional<LoginToken> active = loginTokenRepo.findActiveByEmail(email);
+        Optional<com.chechotkin.backend.auth.model.LoginToken> active = loginTokenRepo.findActiveByEmail(email);
         if (active.isEmpty()) {
 
             return VerifyResult.WRONG_CODE;
         }
 
-        LoginToken token = active.get();
+        com.chechotkin.backend.auth.model.LoginToken token = active.get();
         Instant now = clock.instant();
 
 

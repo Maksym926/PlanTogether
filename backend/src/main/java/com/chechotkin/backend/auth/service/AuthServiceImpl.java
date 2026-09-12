@@ -1,27 +1,30 @@
 package com.chechotkin.backend.auth.service;
 
 import com.chechotkin.backend.auth.authErrors.AuthErrors;
-import com.chechotkin.backend.auth.usecase.LoginTokenUseCase;
+import com.chechotkin.backend.auth.usecase.AuthService;
+import com.chechotkin.backend.auth.usecase.LoginTokenService;
 import com.chechotkin.backend.errors.Result;
 import com.chechotkin.backend.user.model.User;
-import com.chechotkin.backend.user.usecase.UserUseCase;
+import com.chechotkin.backend.user.usecase.UserService;
 
-public class AuthService {
+public class AuthServiceImpl implements AuthService {
 
-    private final LoginTokenUseCase loginTokenUseCase;
-    private final UserUseCase userUseCase;
+    private final LoginTokenService loginTokenService;
+    private final UserService userService;
 
-    public AuthService(LoginTokenUseCase loginTokenUseCase, UserUseCase userUseCase){
-        this.loginTokenUseCase = loginTokenUseCase;
-        this.userUseCase = userUseCase;
+    public AuthServiceImpl(LoginTokenService loginTokenService, UserService userService){
+        this.loginTokenService = loginTokenService;
+        this.userService = userService;
     }
+    @Override
     public void request(String email, String sessionId, String ip){
-        loginTokenUseCase.create(email,sessionId, ip);
+        loginTokenService.create(email,sessionId, ip);
     }
+    @Override
     public Result<User> verify(String email, String code, String sessionId){
-        VerifyResult result = loginTokenUseCase.verify(email, code, sessionId);
+        VerifyResult result = loginTokenService.verify(email, code, sessionId);
         if(result == VerifyResult.OK){
-            User user = userUseCase.upsertUser(email);
+            User user = userService.upsertUser(email);
             return  Result.success(user);
         }
         return switch (result) {

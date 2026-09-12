@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 
-class LoginTokenRepoIT extends AbstractIT {
+class LoginTokenServiceRepoIT extends AbstractIT {
 
     private static final String EMAIL = "max@gmail.com";
     private static final String SESSION_ID = "session-abc";
