@@ -5,6 +5,7 @@ import com.chechotkin.backend.user.repo.UserRepo;
 import com.chechotkin.backend.user.usecase.UserService;
 
 import java.time.Clock;
+import java.util.Optional;
 
 public class UserServiceImpl implements UserService {
     private final UserRepo users;
@@ -18,9 +19,10 @@ public class UserServiceImpl implements UserService {
         return users.upsertByEmail(email, clock.instant());
     }
 
-
-
-
+    @Override
+    public Optional<User> findByEmail(String email) {
+        return users.getByEmail(email);
+    }
 
 
 }
