@@ -1,8 +1,10 @@
 package com.chechotkin.backend.healthCheck;
 
+import com.chechotkin.backend.security.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 
@@ -12,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 
 @WebMvcTest(HealthCheckController.class)
+@Import(SecurityConfig.class)
 public class HealthCheckTest {
 
     @Autowired
