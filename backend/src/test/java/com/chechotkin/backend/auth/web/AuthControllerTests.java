@@ -7,6 +7,7 @@ import com.chechotkin.backend.auth.web.config.AuthConfig;
 import com.chechotkin.backend.auth.web.controller.AuthController;
 import com.chechotkin.backend.auth.web.dto.RequestToken;
 import com.chechotkin.backend.auth.web.dto.VerifyToken;
+import com.chechotkin.backend.security.SecurityConfig;
 import com.chechotkin.backend.user.UserRepoFake;
 import com.chechotkin.backend.user.repo.UserRepo;
 import org.junit.jupiter.api.Test;
@@ -22,12 +23,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AuthController.class)
-@Import(AuthConfig.class)
+@Import({AuthConfig.class, SecurityConfig.class})
 public class AuthControllerTests {
     @Autowired
     private MockMvc mockMvc;
@@ -73,7 +75,7 @@ public class AuthControllerTests {
     @Test
     void requestForTestEventShouldReturn202Test() throws Exception {
         MockHttpSession session = new MockHttpSession();
-        mockMvc.perform(post("/api/auth/request").session(session)
+        mockMvc.perform(post("/api/auth/request").session(session).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new RequestToken(EMAIL))))
                 .andExpect(status().isAccepted());
@@ -87,24 +89,24 @@ public class AuthControllerTests {
         String secondCode = "999999";
 
         codeGenerator.setCode(firstCode);
-        mockMvc.perform(post("/api/auth/request").session(session)
+        mockMvc.perform(post("/api/auth/request").session(session).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new RequestToken(EMAIL))))
                 .andExpect(status().isAccepted());
 
         codeGenerator.setCode(secondCode);
-        mockMvc.perform(post("/api/auth/request").session(session)
+        mockMvc.perform(post("/api/auth/request").session(session).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new RequestToken(EMAIL))))
                 .andExpect(status().isAccepted());
 
-        mockMvc.perform(post("/api/auth/verify").session(session)
+        mockMvc.perform(post("/api/auth/verify").session(session).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new VerifyToken(EMAIL, firstCode))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("wrong_code"));
 
-        mockMvc.perform(post("/api/auth/verify").session(session)
+        mockMvc.perform(post("/api/auth/verify").session(session).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new VerifyToken(EMAIL, secondCode))))
                 .andExpect(status().isOk())
