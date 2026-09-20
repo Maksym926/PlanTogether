@@ -19,6 +19,11 @@ public class SecurityConfig {
     }
 
     @Bean
+    public SessionAuthenticator sessionAuthenticator(SecurityContextRepository securityContextRepository) {
+        return new SessionAuthenticator(securityContextRepository);
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    SecurityContextRepository securityContextRepository) throws Exception {
         return http
