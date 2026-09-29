@@ -73,7 +73,7 @@ public class CodeGenerationAndValidationTests {
     void shouldAcceptOneSecondBeforeExpiryTest(){
         String code = issueCodeFor(EMAIL, SESSION_ID);
 
-        clock.advance(Duration.ofMinutes(15).minusSeconds(1));
+        clock.advance(Duration.ofMinutes(10).minusSeconds(1));
 
         assertEquals(VerifyResult.OK, sut.verify(EMAIL, code, SESSION_ID));
 
@@ -82,7 +82,7 @@ public class CodeGenerationAndValidationTests {
     void shouldRejectOneSecondAfterExpiryTest(){
         String code = issueCodeFor(EMAIL, SESSION_ID);
 
-        clock.advance(Duration.ofMinutes(15).plusSeconds(1));
+        clock.advance(Duration.ofMinutes(10).plusSeconds(1));
 
         assertEquals(VerifyResult.EXPIRED, sut.verify(EMAIL, code, SESSION_ID));
 

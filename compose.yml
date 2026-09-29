@@ -3,9 +3,15 @@ services:
     image: postgres:16
     environment:
       POSTGRES_DB: planTripTogether
-      POSTGRES_USER: ptt
-      POSTGRES_PASSWORD: ptt
+      POSTGRES_USER: ${DB_USERNAME:-ptt}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-ptt}
     ports: ["5433:5432"]
     volumes: [pgdata:/var/lib/postgresql/data]
+
+
+  mailpit:
+    image: axllent/mailpit
+    ports: ["1025:1025", "8025:8025"]
+
 volumes:
   pgdata:

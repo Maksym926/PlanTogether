@@ -30,4 +30,10 @@ public class CodeNotifierFake implements CodeNotifier {
     public void failWith(RuntimeException failure){
         this.failure = failure;
     }
+
+
+    public void clear(){
+        sent.clear();
+        failure = null;
+    }
 }

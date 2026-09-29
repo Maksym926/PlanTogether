@@ -12,6 +12,7 @@ import com.chechotkin.backend.auth.web.dto.VerifyToken;
 import com.chechotkin.backend.security.SecurityConfig;
 import com.chechotkin.backend.user.UserRepoFake;
 import com.chechotkin.backend.user.repo.UserRepo;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -77,7 +78,25 @@ public class AuthControllerTests {
     @Autowired
     private LoginTokenRepo loginTokenRepoFake;
 
+    @Autowired
+    private CodeNotifierFake notifier;
+
     private final String EMAIL = "max123@gmail.com";
+
+    @BeforeEach
+    void resetNotifier() {
+        notifier.clear();
+    }
+
+    @Test
+    void aFailedDelivery_stillReturns202() throws Exception {
+        notifier.failWith(new RuntimeException("smtp down"));
+
+        mockMvc.perform(post("/api/auth/request").session(new MockHttpSession()).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new RequestToken(EMAIL))))
+                .andExpect(status().isAccepted());
+    }
 
     @Test
     void requestForTestEventShouldReturn202Test() throws Exception {

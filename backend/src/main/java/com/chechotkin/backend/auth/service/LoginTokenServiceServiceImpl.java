@@ -12,7 +12,7 @@ import java.util.Optional;
 
 public class LoginTokenServiceServiceImpl implements LoginTokenService {
 
-    private static final Duration TIME_TO_LIVE = Duration.ofMinutes(15);
+    public static final Duration TIME_TO_LIVE = Duration.ofMinutes(10);
     private static final int MAX_ATTEMPTS = 3;
 
     private final CodeGenerator generator;

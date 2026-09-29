@@ -4,7 +4,6 @@ import com.chechotkin.backend.auth.helpers.CodeGenerator;
 import com.chechotkin.backend.auth.helpers.CodeGeneratorImpl;
 import com.chechotkin.backend.auth.repo.LoginTokenRepo;
 import com.chechotkin.backend.auth.service.AuthServiceImpl;
-import com.chechotkin.backend.auth.service.CodeNotifierImpl;
 import com.chechotkin.backend.auth.service.LoginTokenServiceServiceImpl;
 import com.chechotkin.backend.auth.usecase.AuthService;
 import com.chechotkin.backend.auth.usecase.CodeNotifier;
@@ -23,11 +22,6 @@ public class AuthConfig {
     public AuthService authService(LoginTokenService loginTokenService, UserService userService, CodeNotifier codeNotifier){
         return new AuthServiceImpl(loginTokenService, userService, codeNotifier);
     }
-    @Bean
-    public CodeNotifier codeNotifier(){
-        return new CodeNotifierImpl();
-    }
-
     @Bean
     public LoginTokenService loginTokenService(CodeGenerator generator, LoginTokenRepo tokenRepo, Clock clock){
         return new LoginTokenServiceServiceImpl(generator, tokenRepo, clock);
