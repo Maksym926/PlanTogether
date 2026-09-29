@@ -7,10 +7,14 @@ import com.chechotkin.backend.auth.usecase.LoginTokenService;
 import com.chechotkin.backend.errors.Result;
 import com.chechotkin.backend.user.model.User;
 import com.chechotkin.backend.user.usecase.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Locale;
 
 public class AuthServiceImpl implements AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthServiceImpl.class);
 
     private final LoginTokenService loginTokenService;
     private final UserService userService;
@@ -23,7 +27,15 @@ public class AuthServiceImpl implements AuthService {
     }
     @Override
     public void request(String email, String sessionId, String ip){
-        notifier.send(normalize(email),loginTokenService.create(normalize(email), sessionId, ip));;
+        String normalizedEmail = normalize(email);
+        String code = loginTokenService.create(normalizedEmail, sessionId, ip);
+
+
+        try {
+            notifier.send(normalizedEmail, code);
+        } catch (RuntimeException e) {
+            log.error("Could not deliver a login code to {}", normalizedEmail, e);
+        }
     }
     @Override
     public Result<User> verify(String email, String code, String sessionId){
