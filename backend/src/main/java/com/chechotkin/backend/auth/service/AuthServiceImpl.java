@@ -7,6 +7,8 @@ import com.chechotkin.backend.errors.Result;
 import com.chechotkin.backend.user.model.User;
 import com.chechotkin.backend.user.usecase.UserService;
 
+import java.util.Locale;
+
 public class AuthServiceImpl implements AuthService {
 
     private final LoginTokenService loginTokenService;
@@ -18,13 +20,14 @@ public class AuthServiceImpl implements AuthService {
     }
     @Override
     public void request(String email, String sessionId, String ip){
-        loginTokenService.create(email,sessionId, ip);
+        loginTokenService.create(normalize(email), sessionId, ip);
     }
     @Override
     public Result<User> verify(String email, String code, String sessionId){
-        VerifyResult result = loginTokenService.verify(email, code, sessionId);
+        String normalizedEmail = normalize(email);
+        VerifyResult result = loginTokenService.verify(normalizedEmail, code, sessionId);
         if(result == VerifyResult.OK){
-            User user = userService.upsertUser(email);
+            User user = userService.upsertUser(normalizedEmail);
             return  Result.success(user);
         }
         return switch (result) {
@@ -35,6 +38,11 @@ public class AuthServiceImpl implements AuthService {
             case VerifyResult.CONSUMED -> Result.error(AuthErrors.wrongCode());
             case VerifyResult.OK -> throw new IllegalStateException("handled above");
         };
+    }
+
+
+    private static String normalize(String email){
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 
 

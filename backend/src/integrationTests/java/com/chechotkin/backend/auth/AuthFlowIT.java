@@ -22,20 +22,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * The whole login path against a real Postgres: request a code, verify it,
- * and use the resulting session on /api/me.
- */
+
 @AutoConfigureMockMvc
 class AuthFlowIT extends AbstractIT {
 
     private static final String EMAIL = "max@gmail.com";
     private static final String CODE = "123456";
 
-    /**
-     * The real generator is random and only the hash is stored, so a test
-     * could never learn the code it is supposed to submit.
-     */
+
     @TestConfiguration
     static class FixedCode {
         @Bean
