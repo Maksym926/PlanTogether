@@ -2,7 +2,6 @@ package com.chechotkin.backend.auth.notifier;
 
 import com.chechotkin.backend.auth.usecase.CodeNotifier;
 
-import javax.management.RuntimeErrorException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,7 +11,7 @@ public class CodeNotifierFake implements CodeNotifier {
 
     private final List<Sent> sent = new ArrayList<>();
 
-    private RuntimeErrorException failure;
+    private RuntimeException failure;
 
 
     @Override
@@ -28,7 +27,7 @@ public class CodeNotifierFake implements CodeNotifier {
     public Sent lastSent(){
         return sent.get(sent.size() - 1);
     }
-    public void failWith(RuntimeErrorException failure){
+    public void failWith(RuntimeException failure){
         this.failure = failure;
     }
 }
