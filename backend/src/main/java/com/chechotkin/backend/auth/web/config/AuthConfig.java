@@ -4,8 +4,10 @@ import com.chechotkin.backend.auth.helpers.CodeGenerator;
 import com.chechotkin.backend.auth.helpers.CodeGeneratorImpl;
 import com.chechotkin.backend.auth.repo.LoginTokenRepo;
 import com.chechotkin.backend.auth.service.AuthServiceImpl;
+import com.chechotkin.backend.auth.service.CodeNotifierImpl;
 import com.chechotkin.backend.auth.service.LoginTokenServiceServiceImpl;
 import com.chechotkin.backend.auth.usecase.AuthService;
+import com.chechotkin.backend.auth.usecase.CodeNotifier;
 import com.chechotkin.backend.auth.usecase.LoginTokenService;
 import com.chechotkin.backend.user.repo.UserRepo;
 import com.chechotkin.backend.user.service.UserServiceImpl;
@@ -18,9 +20,14 @@ import java.time.Clock;
 @Configuration
 public class AuthConfig {
     @Bean
-    public AuthService authService(LoginTokenService loginTokenService, UserService userService){
-        return new AuthServiceImpl(loginTokenService, userService);
+    public AuthService authService(LoginTokenService loginTokenService, UserService userService, CodeNotifier codeNotifier){
+        return new AuthServiceImpl(loginTokenService, userService, codeNotifier);
     }
+    @Bean
+    public CodeNotifier codeNotifier(){
+        return new CodeNotifierImpl();
+    }
+
     @Bean
     public LoginTokenService loginTokenService(CodeGenerator generator, LoginTokenRepo tokenRepo, Clock clock){
         return new LoginTokenServiceServiceImpl(generator, tokenRepo, clock);

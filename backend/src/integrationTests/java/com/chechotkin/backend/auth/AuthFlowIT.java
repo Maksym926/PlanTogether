@@ -1,7 +1,7 @@
 package com.chechotkin.backend.auth;
 
 import com.chechotkin.backend.AbstractIT;
-import com.chechotkin.backend.auth.helpers.CodeGenerator;
+import com.chechotkin.backend.auth.notifier.CodeNotifierFake;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +15,7 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -27,18 +28,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AuthFlowIT extends AbstractIT {
 
     private static final String EMAIL = "max@gmail.com";
-    private static final String CODE = "123456";
 
 
     @TestConfiguration
-    static class FixedCode {
+    static class FakeNotifier {
         @Bean
         @Primary
-        CodeGenerator fixedCodeGenerator() {
-            return () -> CODE;
+        CodeNotifierFake fakeCodeNotifier() {
+            return new CodeNotifierFake();
         }
     }
-
+    @Autowired
+    private CodeNotifierFake notifier;
+    
     @Autowired
     private MockMvc mockMvc;
 
@@ -61,6 +63,11 @@ class AuthFlowIT extends AbstractIT {
         return (MockHttpSession) result.getRequest().getSession(false);
     }
 
+
+    private String emailedCode() {
+        return notifier.lastSent().code();
+    }
+
     private MvcResult verify(MockHttpSession session, String code) throws Exception {
         return mockMvc.perform(post("/api/auth/verify").session(session).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -73,7 +80,7 @@ class AuthFlowIT extends AbstractIT {
     void verifiedCode_logsTheUserInAndMeReturnsTheProfile() throws Exception {
         MockHttpSession session = requestCode();
 
-        MvcResult login = verify(session, CODE);
+        MvcResult login = verify(session, emailedCode());
         assertThat(login.getResponse().getStatus()).isEqualTo(200);
 
         mockMvc.perform(get("/api/me").session(session))
@@ -84,7 +91,7 @@ class AuthFlowIT extends AbstractIT {
     @Test
     void theLoginSurvivesASecondRequest() throws Exception {
         MockHttpSession session = requestCode();
-        verify(session, CODE);
+        verify(session, emailedCode());
 
         mockMvc.perform(get("/api/me").session(session)).andExpect(status().isOk());
         mockMvc.perform(get("/api/me").session(session)).andExpect(status().isOk());
@@ -101,7 +108,7 @@ class AuthFlowIT extends AbstractIT {
         MockHttpSession session = requestCode();
         String idBeforeLogin = session.getId();
 
-        verify(session, CODE);
+        verify(session, emailedCode());
 
         assertThat(session.getId()).isNotEqualTo(idBeforeLogin);
     }
@@ -119,7 +126,7 @@ class AuthFlowIT extends AbstractIT {
     @Test
     void verifiedCode_createsExactlyOneUser() throws Exception {
         MockHttpSession session = requestCode();
-        verify(session, CODE);
+        verify(session, emailedCode());
 
         long users = jdbc.sql("SELECT count(*) FROM users").query(Long.class).single();
         assertThat(users).isEqualTo(1);

@@ -2,7 +2,9 @@ package com.chechotkin.backend.auth.web;
 
 import com.chechotkin.backend.auth.FixedCodeGenerator;
 import com.chechotkin.backend.auth.LoginTokenRepoFake;
+import com.chechotkin.backend.auth.notifier.CodeNotifierFake;
 import com.chechotkin.backend.auth.repo.LoginTokenRepo;
+import com.chechotkin.backend.auth.usecase.CodeNotifier;
 import com.chechotkin.backend.auth.web.config.AuthConfig;
 import com.chechotkin.backend.auth.web.controller.AuthController;
 import com.chechotkin.backend.auth.web.dto.RequestToken;
@@ -56,6 +58,11 @@ public class AuthControllerTests {
         FixedCodeGenerator fixedCodeGenerator() {
             return new FixedCodeGenerator("123456");
         }
+
+        @Bean
+        @Primary
+        CodeNotifierFake fakeCodeNotifier() {return  new CodeNotifierFake();}
+
 
     }
 

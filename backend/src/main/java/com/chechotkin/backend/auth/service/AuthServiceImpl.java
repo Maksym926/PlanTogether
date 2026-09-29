@@ -2,6 +2,7 @@ package com.chechotkin.backend.auth.service;
 
 import com.chechotkin.backend.auth.authErrors.AuthErrors;
 import com.chechotkin.backend.auth.usecase.AuthService;
+import com.chechotkin.backend.auth.usecase.CodeNotifier;
 import com.chechotkin.backend.auth.usecase.LoginTokenService;
 import com.chechotkin.backend.errors.Result;
 import com.chechotkin.backend.user.model.User;
@@ -13,14 +14,16 @@ public class AuthServiceImpl implements AuthService {
 
     private final LoginTokenService loginTokenService;
     private final UserService userService;
+    private final CodeNotifier notifier;
 
-    public AuthServiceImpl(LoginTokenService loginTokenService, UserService userService){
+    public AuthServiceImpl(LoginTokenService loginTokenService, UserService userService, CodeNotifier notifier){
         this.loginTokenService = loginTokenService;
         this.userService = userService;
+        this.notifier = notifier;
     }
     @Override
     public void request(String email, String sessionId, String ip){
-        loginTokenService.create(normalize(email), sessionId, ip);
+        notifier.send(normalize(email),loginTokenService.create(normalize(email), sessionId, ip));;
     }
     @Override
     public Result<User> verify(String email, String code, String sessionId){

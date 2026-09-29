@@ -69,6 +69,10 @@ testing {
     }
 }
 
+dependencies {
+    integrationTestsImplementation sourceSets.test.output
+}
+
 tasks.named('check') {
     dependsOn testing.suites.integrationTests
 }
