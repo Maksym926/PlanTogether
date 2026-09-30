@@ -138,4 +138,49 @@ public class AuthControllerTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value(EMAIL));
     }
+
+    @Test
+    void invalidEmail_isReportedPerField() throws Exception {
+        mockMvc.perform(post("/api/auth/request").session(new MockHttpSession()).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new RequestToken("not-an-email"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("validation_failed"))
+                .andExpect(jsonPath("$.fieldErrors.email").isArray())
+                .andExpect(jsonPath("$.fieldErrors.email[0]").exists());
+    }
+
+    @Test
+    void malformedJson_isRejectedInTheSameShape() throws Exception {
+        mockMvc.perform(post("/api/auth/request").session(new MockHttpSession()).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ not json"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("malformed_request"));
+    }
+
+    @Test
+    void exhaustedAttempts_areReportedByCode() throws Exception {
+        String email = "attempts@gmail.com";
+        MockHttpSession session = new MockHttpSession();
+
+        mockMvc.perform(post("/api/auth/request").session(session).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new RequestToken(email))))
+                .andExpect(status().isAccepted());
+
+        String wrongCode = objectMapper.writeValueAsString(new VerifyToken(email, "000000"));
+        for (int attempt = 0; attempt < 3; attempt++) {
+            mockMvc.perform(post("/api/auth/verify").session(session).with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(wrongCode))
+                    .andExpect(status().isBadRequest());
+        }
+
+        mockMvc.perform(post("/api/auth/verify").session(session).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(wrongCode))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("too_many_attempts"));
+    }
 }

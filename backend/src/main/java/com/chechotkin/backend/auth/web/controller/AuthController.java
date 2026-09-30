@@ -4,6 +4,7 @@ import com.chechotkin.backend.auth.usecase.AuthService;
 import com.chechotkin.backend.auth.web.dto.RequestToken;
 import com.chechotkin.backend.auth.web.dto.VerifyToken;
 import com.chechotkin.backend.errors.Result;
+import com.chechotkin.backend.exceptions.ErrorResponse;
 import com.chechotkin.backend.security.AuthPrincipal;
 import com.chechotkin.backend.security.SessionAuthenticator;
 import com.chechotkin.backend.user.model.User;
@@ -49,6 +50,8 @@ public class AuthController {
             sessionAuthenticator.login(new AuthPrincipal(user.id(), user.email()), request, response);
             return ResponseEntity.ok(UserResponse.mapToUserResponse(user));
         }
-        return ResponseEntity.badRequest().body(result.getError());
+
+
+        return result.mapError(error -> ResponseEntity.badRequest().body(ErrorResponse.from(error)));
     }
 }

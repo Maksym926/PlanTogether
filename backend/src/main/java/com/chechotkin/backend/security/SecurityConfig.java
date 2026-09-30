@@ -1,5 +1,6 @@
 package com.chechotkin.backend.security;
 
+import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,7 @@ public class SecurityConfig {
                                                    SecurityContextRepository securityContextRepository) throws Exception {
         return http
                 .authorizeHttpRequests(requests -> requests
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers("/api/health-check", "/api/auth/**").permitAll()
                         .anyRequest().authenticated())
                 .securityContext(context -> context.securityContextRepository(securityContextRepository))
