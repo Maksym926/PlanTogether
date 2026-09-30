@@ -69,4 +69,6 @@ public class AuthServiceTests {
         assertThat(result.isSuccess()).isTrue();
         assertThat(result.getResult().email()).isEqualTo(EMAIL);
     }
+
+
 }

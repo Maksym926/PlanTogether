@@ -4,7 +4,6 @@ import com.chechotkin.backend.auth.FixedCodeGenerator;
 import com.chechotkin.backend.auth.LoginTokenRepoFake;
 import com.chechotkin.backend.auth.notifier.CodeNotifierFake;
 import com.chechotkin.backend.auth.repo.LoginTokenRepo;
-import com.chechotkin.backend.auth.usecase.CodeNotifier;
 import com.chechotkin.backend.auth.web.config.AuthConfig;
 import com.chechotkin.backend.auth.web.controller.AuthController;
 import com.chechotkin.backend.auth.web.dto.RequestToken;
@@ -24,7 +23,6 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
-
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -183,4 +181,6 @@ public class AuthControllerTests {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("too_many_attempts"));
     }
+
+
 }
